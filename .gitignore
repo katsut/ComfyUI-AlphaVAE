@@ -3,3 +3,6 @@ __pycache__/
 *.pyo
 .env
 *.safetensors
+.venv/
+.pytest_cache/
+uv.lock
