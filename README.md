@@ -4,11 +4,7 @@ ComfyUI custom nodes for [AlphaVAE](https://github.com/o0o0o00o0/AlphaVAE) — n
 
 AlphaVAE replaces the standard FLUX VAE with an RGBA-capable VAE, enabling direct transparent image generation without post-processing background removal.
 
-## Status
-
-🚧 **Work in Progress** — Not yet functional.
-
-## Planned Nodes
+## Nodes
 
 | Node | Description |
 |------|-------------|
@@ -16,11 +12,62 @@ AlphaVAE replaces the standard FLUX VAE with an RGBA-capable VAE, enabling direc
 | `AlphaVAE Decode` | Decode latent to RGBA image (outputs IMAGE + MASK) |
 | `AlphaVAE Encode` | Encode RGBA image to latent |
 
+## Installation
+
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/katsut/ComfyUI-AlphaVAE.git
+```
+
+## Required Models
+
+### 1. FLUX.1-dev (base model)
+
+Download `flux1-dev.safetensors` from [HuggingFace](https://huggingface.co/black-forest-labs/FLUX.1-dev) (requires license agreement).
+
+Place in: `ComfyUI/models/diffusion_models/flux1-dev.safetensors`
+
+### 2. AlphaVAE VAE (168 MB)
+
+Download `finetune_VAE/` directory from [HuggingFace](https://huggingface.co/o0o0o00o0/AlphaVAE).
+
+Place in: `ComfyUI/models/vae/AlphaVAE/finetune_VAE/` (must contain `config.json` + `diffusion_pytorch_model.safetensors`)
+
+### 3. AlphaVAE Diffusion LoRA (1.3 GB) — Required
+
+Download `finetune_VAE/finetune_diffusion/pytorch_lora_weights.safetensors` from [HuggingFace](https://huggingface.co/o0o0o00o0/AlphaVAE).
+
+Place in: `ComfyUI/models/loras/` (rename to e.g. `alphavae_diffusion_lora.safetensors`)
+
+**Important:** The LoRA is required for proper transparency generation. Without it, AlphaVAE produces flat alpha values with no useful transparency information.
+
+### 4. CLIP models
+
+- `clip_l.safetensors` → `ComfyUI/models/clip/`
+- `t5xxl_fp8_e4m3fn.safetensors` → `ComfyUI/models/clip/`
+
+## Example Workflow
+
+```
+UNETLoader (flux1-dev.safetensors)
+  → LoraLoader (alphavae_diffusion_lora.safetensors, strength: 1.0)
+    → KSampler (steps: 20, cfg: 1.0, sampler: euler, scheduler: simple)
+
+DualCLIPLoader (clip_l + t5xxl, type: flux)
+  → LoraLoader (same)
+    → CLIPTextEncode → FluxGuidance (guidance: 3.5)
+      → KSampler
+
+AlphaVAELoader (AlphaVAE/finetune_VAE)
+  → AlphaVAEDecode (from KSampler output)
+    → JoinImageWithAlpha (IMAGE + MASK → RGBA)
+      → SaveImage
+```
+
 ## Requirements
 
 - [ComfyUI](https://github.com/comfyanonymous/ComfyUI) v0.18+
-- [FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev) base model
-- [AlphaVAE](https://huggingface.co/o0o0o00o0/AlphaVAE) model weights
+- [diffusers](https://github.com/huggingface/diffusers) >= 0.33.0
 
 ## License
 
