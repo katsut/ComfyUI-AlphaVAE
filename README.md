@@ -17,6 +17,7 @@ AlphaVAE replaces the standard FLUX VAE with an RGBA-capable VAE, enabling direc
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/katsut/ComfyUI-AlphaVAE.git
+pip install diffusers>=0.33.0
 ```
 
 ## Required Models
@@ -41,10 +42,10 @@ Place in: `ComfyUI/models/loras/` (rename to e.g. `alphavae_diffusion_lora.safet
 
 **Important:** The LoRA is required for proper transparency generation. Without it, AlphaVAE produces flat alpha values with no useful transparency information.
 
-### 4. CLIP models
+### 4. CLIP models (for FLUX text encoding)
 
-- `clip_l.safetensors` → `ComfyUI/models/clip/`
-- `t5xxl_fp8_e4m3fn.safetensors` → `ComfyUI/models/clip/`
+- `clip_l.safetensors` → `ComfyUI/models/clip/` ([download](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/clip_l.safetensors))
+- `t5xxl_fp8_e4m3fn.safetensors` → `ComfyUI/models/clip/` ([download](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/t5xxl_fp8_e4m3fn.safetensors))
 
 ## Example Workflow
 
@@ -66,7 +67,7 @@ AlphaVAELoader (AlphaVAE/finetune_VAE)
 
 ## Requirements
 
-- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) v0.18+
+- [ComfyUI](https://github.com/Comfy-Org/ComfyUI) v0.18+
 - [diffusers](https://github.com/huggingface/diffusers) >= 0.33.0
 
 ## License
