@@ -23,10 +23,14 @@ class AlphaVAEModel:
         return latent
 
     def decode(self, latent):
-        """Decode latent [B,16,H/8,W/8] to RGBA image [B,4,H,W] in [-1,1]."""
+        """Decode latent [B,16,H/8,W/8] to RGBA image [B,4,H,W] in [-1,1].
+
+        Calls the decoder directly to bypass diffusers' auto-scaling,
+        since ComfyUI's KSampler already handles latent scaling via process_out.
+        """
         self.model.to(self.device, dtype=self.dtype)
         with torch.no_grad():
-            decoded = self.model.decode(latent.to(self.device, dtype=self.dtype)).sample
+            decoded = self.model.decoder(latent.to(self.device, dtype=self.dtype))
         self.model.to(model_management.vae_offload_device())
         return decoded
 
@@ -40,15 +44,18 @@ class AlphaVAELoader:
         candidates = []
         if os.path.isdir(vae_dir):
             for name in os.listdir(vae_dir):
-                config_path = os.path.join(vae_dir, name, "config.json")
-                if not os.path.isfile(config_path):
-                    # Check one level deeper (e.g. AlphaVAE/finetune_VAE/)
-                    for sub in os.listdir(os.path.join(vae_dir, name)):
-                        sub_config = os.path.join(vae_dir, name, sub, "config.json")
-                        if os.path.isfile(sub_config):
-                            candidates.append(os.path.join(name, sub))
-                else:
+                name_path = os.path.join(vae_dir, name)
+                if not os.path.isdir(name_path):
+                    continue
+                config_path = os.path.join(name_path, "config.json")
+                if os.path.isfile(config_path):
                     candidates.append(name)
+                else:
+                    # Check one level deeper (e.g. AlphaVAE/finetune_VAE/)
+                    for sub in os.listdir(name_path):
+                        sub_path = os.path.join(name_path, sub)
+                        if os.path.isdir(sub_path) and os.path.isfile(os.path.join(sub_path, "config.json")):
+                            candidates.append(os.path.join(name, sub))
         if not candidates:
             candidates = ["(no diffusers VAE found)"]
         return {
@@ -110,11 +117,9 @@ class AlphaVAEDecode:
     def decode(self, samples, alpha_vae):
         latent = samples["samples"]
 
-        # AlphaVAE uses same scaling as FLUX VAE
-        scale_factor = 0.3611
-        shift_factor = 0.1159
-        latent = latent / scale_factor + shift_factor
-
+        # KSampler process_out already converts to VAE's natural latent space.
+        # We call decoder directly (bypassing diffusers auto-scaling),
+        # so no additional scaling needed.
         decoded = alpha_vae.decode(latent)
 
         # Convert from [-1,1] to [0,1]
@@ -162,12 +167,9 @@ class AlphaVAEEncode:
         # Convert from [0,1] to [-1,1]
         rgba = rgba * 2.0 - 1.0
 
+        # Encode to VAE's natural latent space
+        # ComfyUI's KSampler will apply process_in (scaling) as needed
         latent = alpha_vae.encode(rgba)
-
-        # Apply FLUX scaling
-        scale_factor = 0.3611
-        shift_factor = 0.1159
-        latent = (latent - shift_factor) * scale_factor
 
         return ({"samples": latent},)
 
