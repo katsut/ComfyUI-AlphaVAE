@@ -4,7 +4,7 @@ ComfyUI custom nodes for [AlphaVAE](https://github.com/o0o0o00o0/AlphaVAE) — n
 
 ## What is this?
 
-When creating game assets, stickers, or logos with AI image generation, you typically need **transparent backgrounds**. The standard approach is a two-step process: generate an image, then remove the background with a separate tool. This is slow and often produces rough edges.
+Many AI image generation use cases — product photos, design elements, compositing — require **transparent backgrounds**. The standard approach is a two-step process: generate an image, then remove the background with a separate tool. This is slow and often produces rough edges.
 
 **AlphaVAE** solves this by replacing the standard VAE (the component that converts between pixel images and the AI's internal representation) with one that natively understands transparency. Instead of generating RGB (3 channels), it generates RGBA (4 channels, where A = alpha/transparency) in a single pass.
 
