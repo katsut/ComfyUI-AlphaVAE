@@ -131,7 +131,8 @@ class AlphaVAEDecode:
 
         # Split RGB and Alpha
         image = rgba[:, :, :, :3]
-        alpha_mask = rgba[:, :, :, 3]
+        # AlphaVAE outputs inverted alpha (0=opaque, 1=transparent)
+        alpha_mask = 1.0 - rgba[:, :, :, 3]
 
         return (image, alpha_mask)
 
