@@ -35,6 +35,14 @@ This project provides the [ComfyUI](https://github.com/Comfy-Org/ComfyUI) integr
 - It only supports **SDXL/SD1.5** (no FLUX support)
 - AlphaVAE achieves **better quality** (PSNR +4.9 dB, SSIM +3.2% vs LayerDiffuse)
 
+## FLUX.2 support
+
+**This project targets FLUX.1-dev only. There are no plans to support FLUX.2 (including `[klein]`).**
+
+The transparency here comes entirely from upstream [AlphaVAE](https://github.com/o0o0o00o0/AlphaVAE) weights, which are trained specifically for FLUX.1-dev — a VAE derived from FLUX.1's VAE, plus a diffusion LoRA tied to FLUX.1-dev. FLUX.2 uses a different VAE and a different text encoder, so these weights **cannot be loaded with it**. Supporting FLUX.2 would require the upstream authors to retrain AlphaVAE on FLUX.2, which is out of scope for this wrapper.
+
+Also note that **FLUX.2 has no native alpha (RGBA) output of its own** — its VAE decodes RGB only. If you just need a transparent cutout with FLUX.2, add a post-processing background-removal node (e.g. RMBG-2.0 or BEN-2) after generation; for subjects with clear edges that is usually enough. Native alpha-aware generation (AlphaVAE on FLUX.1) still has the edge for **soft / semi-transparent** cases — glass refraction, glow, smoke — where post-process matting tends to leave color bleeding or edge fringing.
+
 ## Nodes
 
 | Node | Description |
